@@ -44,6 +44,10 @@ type resticRepo struct {
 }
 
 func New(name string, config RepoConfig) (ResticRepo, error) {
+	if config.Environment == nil {
+		config.Environment = make(map[string]string)
+	}
+
 	if len(config.EnvironmentFile) > 0 {
 		var env map[string]string
 		envFile, err := os.Open(config.EnvironmentFile)
