@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"syscall"
 
 	"go.uber.org/zap"
 )
@@ -69,6 +70,10 @@ func New(name string, config RepoConfig) (ResticRepo, error) {
 		}
 	}
 
+	for _, cmd := range []string{"check", "forget", "snapshots", "stats"} {
+		commandErrors.WithLabelValues(cmd, name)
+	}
+
 	return &resticRepo{
 		name:            name,
 		repository:      config.Repository,
@@ -90,14 +95,20 @@ func (r *resticRepo) cmd(ctx context.Context, c string, args ...string) ([]byte,
 	args = append([]string{c}, args...)
 	args = append(args, "--json")
 	cmd := exec.CommandContext(ctx, "restic", args...)
-	cmd.Env = append(cmd.Env, fmt.Sprintf("RESTIC_REPOSITORY=%s", r.repository))
+	cmd.Cancel = func() error {
+		return cmd.Process.Signal(syscall.SIGTERM)
+	}
+	cmd.Env = append(cmd.Environ(), fmt.Sprintf("RESTIC_REPOSITORY=%s", r.repository))
 	for k, v := range r.environment {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+		cmd.Env = append(cmd.Environ(), fmt.Sprintf("%s=%s", k, v))
 	}
 	r.logger.Debug("running restic command", zap.String("cmd", cmd.String()))
 	output, err := cmd.Output()
 	if err != nil {
 		commandErrors.WithLabelValues(c, r.name).Inc()
+		if exitError, ok := err.(*exec.ExitError); ok {
+			r.logger.Error("restic command exited with an error", zap.String("cmd", cmd.String()), zap.ByteString("stderr", exitError.Stderr), zap.Int("exitCode", exitError.ExitCode()))
+		}
 	}
 	return output, err
 }

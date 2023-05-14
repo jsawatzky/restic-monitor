@@ -98,6 +98,7 @@ func main() {
 			logger.Warn("skipping repo", zap.String("repo", name))
 			continue
 		}
+		poller.Poll(ctx)
 		cronRunner.AddJob(repoConfig.MaintenanceSchedule, monitor.NewMaintenanceJob(repo))
 
 		wg.Add(1)

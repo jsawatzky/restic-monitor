@@ -17,6 +17,7 @@ type hostPathData struct {
 
 type Poller interface {
 	Run(ctx context.Context)
+	Poll(ctx context.Context)
 }
 
 type poller struct {
@@ -34,7 +35,7 @@ func NewPoller(repo restic.ResticRepo, interval time.Duration) (Poller, error) {
 	}, nil
 }
 
-func (p *poller) poll(ctx context.Context) {
+func (p *poller) Poll(ctx context.Context) {
 	p.logger.Info("polling repo")
 
 	err := p.repo.Check(ctx)
@@ -102,7 +103,7 @@ func (p *poller) Run(ctx context.Context) {
 	case <-timer.C:
 	}
 
-	p.poll(ctx)
+	p.Poll(ctx)
 
 	ticker := time.NewTicker(p.interval)
 
@@ -112,7 +113,7 @@ func (p *poller) Run(ctx context.Context) {
 			ticker.Stop()
 			return
 		case <-ticker.C:
-			p.poll(ctx)
+			p.Poll(ctx)
 		}
 	}
 
