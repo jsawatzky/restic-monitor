@@ -10,11 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type hostPathData struct {
-	Count        int
-	LastSnapshot time.Time
-}
-
 type Poller interface {
 	Run(ctx context.Context)
 	Poll(ctx context.Context)
@@ -51,11 +46,7 @@ func (p *poller) Poll(ctx context.Context) {
 		p.logger.Error("failed to get snapshots", zap.Error(err))
 	}
 
-	var data = make(map[string]map[string]hostPathData)
 	for _, group := range snapshots {
-		if _, ok := data[group.Key.Hostname]; !ok {
-			data[group.Key.Hostname] = make(map[string]hostPathData)
-		}
 		path := strings.Join(group.Key.Paths, ",")
 		var latestSnapshot restic.Snapshot
 		for _, snapshot := range group.Snapshots {
