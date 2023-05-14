@@ -78,6 +78,8 @@ func (p *poller) Poll(ctx context.Context) {
 	repoUncompressedSize.WithLabelValues(p.repo.Name()).Set(float64(rawStats.TotalUncompressedSize))
 	repoCompressionRatio.WithLabelValues(p.repo.Name()).Set(float64(rawStats.CompressionRatio))
 	repoBlobCount.WithLabelValues(p.repo.Name()).Set(float64(rawStats.TotalBlobCount))
+
+	p.logger.Info("poll complete")
 }
 
 func (p *poller) Run(ctx context.Context) {

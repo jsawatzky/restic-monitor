@@ -99,7 +99,7 @@ func main() {
 			continue
 		}
 		poller.Poll(ctx)
-		cronRunner.AddJob(repoConfig.MaintenanceSchedule, monitor.NewMaintenanceJob(repo))
+		cronRunner.AddJob(repoConfig.MaintenanceSchedule, monitor.NewMaintenanceJob(repo, poller))
 
 		wg.Add(1)
 		go func(p monitor.Poller, wg *sync.WaitGroup) {
