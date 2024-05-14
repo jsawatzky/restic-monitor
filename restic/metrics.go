@@ -6,13 +6,36 @@ import (
 )
 
 var (
-	commandErrors = promauto.NewCounterVec(
+	commandRepoLocked = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: "restic",
+			Subsystem: "command",
+			Name:      "repo_locked",
+			Help:      "1 if the repo is locked by another process, 0 otherwise",
+		},
+	)
+	commandUnknownErrors = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: "restic",
 			Subsystem: "command",
-			Name:      "errors",
-			Help:      "number of errors when running restic commands",
+			Name:      "unknown_errors_count",
+			Help:      "number of unknown errors encountered when running restic commands",
 		},
-		[]string{"cmd", "repo"},
+	)
+	commandConnectionErrors = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "restic",
+			Subsystem: "command",
+			Name:      "connection_errors_count",
+			Help:      "number of connection errors encountered when running restic commands",
+		},
+	)
+	commandCount = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "restic",
+			Subsystem: "command",
+			Name:      "count",
+			Help:      "number of restic commands run",
+		},
 	)
 )

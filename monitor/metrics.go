@@ -14,6 +14,14 @@ var (
 		},
 		[]string{"repo"},
 	)
+	repoLastSuccessfulPoll = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "restic",
+			Name:      "last_successful_poll",
+			Help:      "unix timestamp of the last successful poll of the repo",
+		},
+		[]string{"repo"},
+	)
 	snapshotCount = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "restic",
@@ -81,7 +89,7 @@ var (
 	snapshotsForgotten = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "restic",
-			Name:      "snapshots_forgotten",
+			Name:      "snapshots_forgotten_count",
 			Help:      "number of snapshots forgotten during maintenance",
 		},
 		[]string{"repo", "host", "path"},

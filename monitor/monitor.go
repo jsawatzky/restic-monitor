@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"strings"
 	"time"
@@ -34,16 +35,18 @@ func (p *poller) Poll(ctx context.Context) {
 	p.logger.Info("polling repo")
 
 	err := p.repo.Check(ctx)
-	if err != nil {
-		p.logger.Error("repo check failed", zap.Error(err))
+	if errors.Is(err, restic.ErrCheckFailed) {
 		repoStatus.WithLabelValues(p.repo.Name()).Set(0)
-	} else {
+	} else if err == nil {
 		repoStatus.WithLabelValues(p.repo.Name()).Set(1)
+	} else {
+		return
 	}
 
 	snapshots, err := p.repo.GetSnapshots(ctx)
 	if err != nil {
 		p.logger.Error("failed to get snapshots", zap.Error(err))
+		return
 	}
 
 	for _, group := range snapshots {
@@ -80,6 +83,7 @@ func (p *poller) Poll(ctx context.Context) {
 	repoBlobCount.WithLabelValues(p.repo.Name()).Set(float64(rawStats.TotalBlobCount))
 
 	p.logger.Info("poll complete")
+	repoLastSuccessfulPoll.WithLabelValues(p.repo.Name()).SetToCurrentTime()
 }
 
 func (p *poller) Run(ctx context.Context) {
